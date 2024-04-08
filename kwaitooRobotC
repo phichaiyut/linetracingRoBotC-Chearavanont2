@@ -1,0 +1,271 @@
+
+  int Speed, SlowSpeed, ACCSpeed, BaseSpeed, LeftBaseSpeed, RightBaseSpeed, TurnSpeed, MaxSpeed, SonarSpeed, DistanceRef;
+  int Error, PreError, Kp, Kd, Ki, Kt,BackLeftBaseSpeed, BackRightBaseSpeed;
+  int KpB,KdB,KtB,KiB;
+  int RefL3, RefL2, RefL1, RefC, RefR1, RefR2, RefR3, RefBL1, RefBR1, SumError;
+  int L3, L2, L1, C, R1, R2, R3, BL1, BR1;
+  long Timer, Timer2, Timer3;
+  int SW_OK_Status,Error99Check=0,digital_sw=0;
+  int KnobBase;
+  int CanStatus=0;
+void setup() {
+  Speed = 60;
+  BaseSpeed = Speed; 
+  TurnSpeed = Speed;
+  //ForwardSpeedTime(60, 100);
+  //sl(100);
+  //TurnRight();
+  TracJC();
+  //MotorStop();
+}
+
+void loop() {
+    lcd (" %d %d" , analog(3),Error );
+    
+}
+
+void MotorStop() {
+  ao();
+  delay(10);
+}
+void ForwardSpeedTime(int MotorSpeed, int Time) 
+{
+  BaseSpeed = MotorSpeed;
+  InitialSpeed();
+  Forward();
+  delay(Time);
+  BaseSpeed = Speed;
+  InitialSpeed();
+}
+
+void Forward() 
+{
+  fd2(LeftBaseSpeed, RightBaseSpeed);
+}
+
+void delay(int Time) 
+{
+    sleep(Time*20);
+}
+void InitialRef() {
+    RefL3 = 512;
+    RefL2 = 512;
+    RefL1 = 512;     
+    RefC = 512;
+    RefR1 = 512;     
+    RefR2 = 512;
+    RefR3 = 512;   
+}
+
+void InitialSpeed() 
+{
+  MaxSpeed = 100;
+  Ki = 0;
+  
+  if (BaseSpeed <= 50) {
+    LeftBaseSpeed = BaseSpeed - 0;
+    RightBaseSpeed = BaseSpeed - 1;
+    BackLeftBaseSpeed = BaseSpeed - 0;
+    BackRightBaseSpeed = BaseSpeed - 0;
+    Kp = 10;       //forward PID
+    Kd = 25;
+    Kt = 10;
+    
+  }
+  else if (BaseSpeed <= 60) {
+    LeftBaseSpeed = BaseSpeed - 0;
+    RightBaseSpeed = BaseSpeed - 0;
+    BackLeftBaseSpeed = BaseSpeed - 0;
+    BackRightBaseSpeed = BaseSpeed - 0;
+    Kp = 12;       //forward PID
+    Kd = 30;
+    Kt = 10;
+  }
+  else if (BaseSpeed <= 70) {
+    LeftBaseSpeed = BaseSpeed - 0;
+    RightBaseSpeed = BaseSpeed - 1;
+    BackLeftBaseSpeed = BaseSpeed - 0;
+    BackRightBaseSpeed = BaseSpeed - 0;
+    Kp = 15;       //forward PID
+    Kd = 40;
+    Kt = 10;
+  }
+  else if (BaseSpeed <= 80) {
+    LeftBaseSpeed = BaseSpeed - 0;
+    RightBaseSpeed = BaseSpeed - 0;
+    BackLeftBaseSpeed = BaseSpeed - 1;
+    BackRightBaseSpeed = BaseSpeed - 0;
+    Kp = 20;       //forward PID
+    Kd = 50;
+    Kt = 10;
+    
+  }
+  else if (BaseSpeed <= 90) {
+    LeftBaseSpeed = BaseSpeed - 0;
+    RightBaseSpeed = BaseSpeed - 0;
+    BackLeftBaseSpeed = BaseSpeed - 0;
+    BackRightBaseSpeed = BaseSpeed - 0;
+    Kp = 25;       //forward PID
+    Kd = 70;
+    Kt = 10;
+  }
+  else {
+    LeftBaseSpeed = BaseSpeed - 0;
+    RightBaseSpeed = BaseSpeed - 0;
+    BackLeftBaseSpeed = BaseSpeed - 0;
+    BackRightBaseSpeed = BaseSpeed - 0;
+    Kp = 30;       //forward PID
+    Kd = 70;
+    Kt = 10;
+  }
+}
+void Read7Analog() {
+  L3 = analog(0);
+  L2 = analog(1);
+  L1 = analog(2);
+  C = analog(3);
+  R1 = analog(4);
+  R2 = analog(5);
+  R3 = analog(6);
+}
+void CalError()
+{
+     ConvertADC();
+  if((L3==1)&&(L2==1)&&(L1==1)&&(C==1)&&(R1==1)&&(R2==1)&&(R3==0)) Error = 6;  
+  else if((L3==1)&&(L2==1)&&(L1==1)&&(C==1)&&(R1==1)&&(R2==0)&&(R3==0)) Error = 5;  
+  else if((L3==1)&&(L2==1)&&(L1==1)&&(C==1)&&(R1==1)&&(R2==0)&&(R3==1)) Error = 4; 
+  else if((L3==1)&&(L2==1)&&(L1==1)&&(C==1)&&(R1==0)&&(R2==0)&&(R3==1)) Error = 3; 
+  else if((L3==1)&&(L2==1)&&(L1==1)&&(C==1)&&(R1==0)&&(R2==1)&&(R3==1)) Error = 2; 
+  else if((L3==1)&&(L2==1)&&(L1==1)&&(C==0)&&(R1==0)&&(R2==1)&&(R3==1)) Error = 1; 
+  else if((L3==1)&&(L2==1)&&(L1==1)&&(C==0)&&(R1==1)&&(R2==1)&&(R3==1)) Error = 0; 
+  else if((L3==1)&&(L2==1)&&(L1==0)&&(C==0)&&(R1==1)&&(R2==1)&&(R3==1)) Error = -1;
+  else if((L3==1)&&(L2==1)&&(L1==0)&&(C==1)&&(R1==1)&&(R2==1)&&(R3==1)) Error = -2;
+  else if((L3==1)&&(L2==0)&&(L1==0)&&(C==1)&&(R1==1)&&(R2==1)&&(R3==1)) Error = -3; 
+  else if((L3==1)&&(L2==0)&&(L1==1)&&(C==1)&&(R1==1)&&(R2==1)&&(R3==1)) Error = -4; 
+  else if((L3==0)&&(L2==0)&&(L1==1)&&(C==1)&&(R1==1)&&(R2==1)&&(R3==1)) Error = -5; 
+  else if((L3==0)&&(L2==1)&&(L1==1)&&(C==1)&&(R1==1)&&(R2==1)&&(R3==1)) Error = -6; 
+  else if((L3==1)&&(L2==1)&&(L1==1)&&(C==1)&&(R1==1)&&(R2==1)&&(R3==1)&&(Error99Check==1))  Error = 99;      //white all
+  else if((L3==0)&&(L2==0)&&(L1==0)&&(C==0)&&(R1==0)&&(R2==0)&&(R3==0)) Error = 100;   //Left and Right Junction 
+  else if((L3==0)&&(L2==0)&&(L1==0)&&(C==0)/*&&(R1==0)*/) Error = 101;                             //Left Junction 
+  else if(/*(L1==0)&&*/(C==0)&&(R1==0)&&(R2==0)&&(R3==0)) Error = 102;
+  Error99Check=0;
+  //CalError7Sensor(); 
+}
+void ConvertADC()
+{
+  Read7Analog();
+  if(L3<RefL3) L3 = 0;else L3 = 1;  //0:ดำ 1:ขาว
+  if(L2<RefL2) L2 = 0;else L2 = 1; 
+  if(L1<RefL1) L1 = 0;else L1 = 1;
+  if(C<RefC) C = 0;else C = 1;
+  if(R1<RefR1) R1 = 0;else R1 = 1;
+  if(R2<RefR2) R2 = 0;else R2 = 1;
+  if(R3<RefR3) R3 = 0;else R3 = 1;
+}
+
+void CalError7Sensor() 
+{
+  ConvertADC();
+  if((L3==1)&&(L2==1)&&(L1==1)&&(C==1)&&(R1==1)&&(R2==1)&&(R3==0)) Error = 6;  
+  else if((L3==1)&&(L2==1)&&(L1==1)&&(C==1)&&(R1==1)&&(R2==0)&&(R3==0)) Error = 5;  
+  else if((L3==1)&&(L2==1)&&(L1==1)&&(C==1)&&(R1==1)&&(R2==0)&&(R3==1)) Error = 4; 
+  else if((L3==1)&&(L2==1)&&(L1==1)&&(C==1)&&(R1==0)&&(R2==0)&&(R3==1)) Error = 3; 
+  else if((L3==1)&&(L2==1)&&(L1==1)&&(C==1)&&(R1==0)&&(R2==1)&&(R3==1)) Error = 2; 
+  else if((L3==1)&&(L2==1)&&(L1==1)&&(C==0)&&(R1==0)&&(R2==1)&&(R3==1)) Error = 1; 
+  else if((L3==1)&&(L2==1)&&(L1==1)&&(C==0)&&(R1==1)&&(R2==1)&&(R3==1)) Error = 0; 
+  else if((L3==1)&&(L2==1)&&(L1==0)&&(C==0)&&(R1==1)&&(R2==1)&&(R3==1)) Error = -1;
+  else if((L3==1)&&(L2==1)&&(L1==0)&&(C==1)&&(R1==1)&&(R2==1)&&(R3==1)) Error = -2;
+  else if((L3==1)&&(L2==0)&&(L1==0)&&(C==1)&&(R1==1)&&(R2==1)&&(R3==1)) Error = -3; 
+  else if((L3==1)&&(L2==0)&&(L1==1)&&(C==1)&&(R1==1)&&(R2==1)&&(R3==1)) Error = -4; 
+  else if((L3==0)&&(L2==0)&&(L1==1)&&(C==1)&&(R1==1)&&(R2==1)&&(R3==1)) Error = -5; 
+  else if((L3==0)&&(L2==1)&&(L1==1)&&(C==1)&&(R1==1)&&(R2==1)&&(R3==1)) Error = -6; 
+  else if((L3==1)&&(L2==1)&&(L1==1)&&(C==1)&&(R1==1)&&(R2==1)&&(R3==1)&&(Error99Check==1))  Error = 99;      //white all
+  else if((L3==0)&&(L2==0)&&(L1==0)&&(C==0)&&(R1==0)&&(R2==0)&&(R3==0)) Error = 100;   //Left and Right Junction 
+  else if((L3==0)&&(L2==0)&&(L1==0)&&(C==0)/*&&(R1==0)*/) Error = 101;                             //Left Junction 
+  else if(/*(L1==0)&&*/(C==0)&&(R1==0)&&(R2==0)&&(R3==0)) Error = 102;
+  Error99Check=0;
+  
+}
+void TracPID()  {
+  int Output, LeftOutput, RightOutput;
+ConvertADC();
+  if((L3==1)&&(L2==1)&&(L1==1)&&(C==1)&&(R1==1)&&(R2==1)&&(R3==0)) Error = 6;  
+  else if((L3==1)&&(L2==1)&&(L1==1)&&(C==1)&&(R1==1)&&(R2==0)&&(R3==0)) Error = 5;  
+  else if((L3==1)&&(L2==1)&&(L1==1)&&(C==1)&&(R1==1)&&(R2==0)&&(R3==1)) Error = 4; 
+  else if((L3==1)&&(L2==1)&&(L1==1)&&(C==1)&&(R1==0)&&(R2==0)&&(R3==1)) Error = 3; 
+  else if((L3==1)&&(L2==1)&&(L1==1)&&(C==1)&&(R1==0)&&(R2==1)&&(R3==1)) Error = 2; 
+  else if((L3==1)&&(L2==1)&&(L1==1)&&(C==0)&&(R1==0)&&(R2==1)&&(R3==1)) Error = 1; 
+  else if((L3==1)&&(L2==1)&&(L1==1)&&(C==0)&&(R1==1)&&(R2==1)&&(R3==1)) Error = 0; 
+  else if((L3==1)&&(L2==1)&&(L1==0)&&(C==0)&&(R1==1)&&(R2==1)&&(R3==1)) Error = -1;
+  else if((L3==1)&&(L2==1)&&(L1==0)&&(C==1)&&(R1==1)&&(R2==1)&&(R3==1)) Error = -2;
+  else if((L3==1)&&(L2==0)&&(L1==0)&&(C==1)&&(R1==1)&&(R2==1)&&(R3==1)) Error = -3; 
+  else if((L3==1)&&(L2==0)&&(L1==1)&&(C==1)&&(R1==1)&&(R2==1)&&(R3==1)) Error = -4; 
+  else if((L3==0)&&(L2==0)&&(L1==1)&&(C==1)&&(R1==1)&&(R2==1)&&(R3==1)) Error = -5; 
+  else if((L3==0)&&(L2==1)&&(L1==1)&&(C==1)&&(R1==1)&&(R2==1)&&(R3==1)) Error = -6; 
+  else if((L3==1)&&(L2==1)&&(L1==1)&&(C==1)&&(R1==1)&&(R2==1)&&(R3==1)&&(Error99Check==1))  Error = 99;      //white all
+  else if((L3==0)&&(L2==0)&&(L1==0)&&(C==0)&&(R1==0)&&(R2==0)&&(R3==0)) Error = 100;   //Left and Right Junction 
+  else if((L3==0)&&(L2==0)&&(L1==0)&&(C==0)/*&&(R1==0)*/) Error = 101;                             //Left Junction 
+  else if(/*(L1==0)&&*/(C==0)&&(R1==0)&&(R2==0)&&(R3==0)) Error = 102;
+  Error99Check=0;
+  Output = (Kp*Error) + (Ki*SumError) + (Kd*(Error-PreError));
+  LeftOutput = LeftBaseSpeed + Output;
+  RightOutput = RightBaseSpeed - Output;
+  if(LeftOutput>MaxSpeed) LeftOutput = MaxSpeed;
+  else if(LeftOutput<-MaxSpeed) LeftOutput = -MaxSpeed;//new pid
+  if(RightOutput>MaxSpeed) RightOutput = MaxSpeed;
+  else if(RightOutput<-MaxSpeed) RightOutput = -MaxSpeed;//new pid
+  motor(1,LeftOutput);
+  
+  motor(2,RightOutput);
+  
+  PreError = Error;
+  SumError += Error;
+}
+void TracJC() 
+{  
+  InitialSpeed();
+  // TracSpeedTime(BaseSpeed,5000/BaseSpeed);
+  CalError();
+  while(Error<99)
+  {
+    TracPID();
+    
+    CalError();
+    lcd (" %d %d" , analog(3),Error );
+  }
+MotorStop();
+  //ErrorClear=0;
+}
+
+void TurnLeft() {
+    MotorStop();
+    sl(100);
+    delay(10);
+    while(analog(3)>=512) {ConvertADC();}
+    delay(2);
+    MotorStop();
+}
+void TurnRight() {
+    MotorStop();
+    sr(100);
+    delay(10);
+    while(analog(3)>=512) {ConvertADC();}
+    delay(2);
+    MotorStop();
+}
+void Left(int Speed , int Time){
+  MotorStop();
+  delay(1);
+  sl(Speed);
+  delay(Time);
+  MotorStop();
+  delay(1);
+}
+void Right(int Speed , int Time){
+  MotorStop();
+  delay(1);
+  sr(Speed);
+  delay(Time);
+  MotorStop();
+  delay(1);
+}
